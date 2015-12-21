@@ -8,9 +8,10 @@
 #define ACCESS_POINT_PASSWORD "it-at-jcu"
 
 // Multicast declarations
-IPAddress ipMulti(239, 0, 0, 57);
-unsigned int portMulti = 8080;
+const IPAddress ipMulti(239, 0, 0, 57);
+const unsigned int portMulti = 8080;
 
+String DEVICE_ID;
 
 byte buffer[8];
 double results[4];
@@ -18,26 +19,30 @@ String sensorData;
 WiFiUDP udp;
 
 void setup() {
+  sensorData.reserve(500);
   setup9DOF();
   setupWIFI();
 }
 
 void loop() {
-  sensorData = "";
+  sensorData.remove(0); // clear all text
+  sensorData.concat(DEVICE_ID);
+  sensorData.concat(" ");
+  sensorData.concat(millis());
+  sensorData.concat(" ");
   readADXL345();
   readHMC5883L();
   readITG3200();
-//  Serial.println(sensorData);
   
   // send multicast reply
   udp.beginPacketMulticast(ipMulti, portMulti, WiFi.localIP());
   udp.println(sensorData);
   udp.endPacket();
+  delay(50);
 }
 
 void setup9DOF() {
   Wire.begin(0, 2);
-//  Serial.begin(9600);
 
   // Note: all data is 16bit twos complement
   // put ADXL345 into 16g full resolution measurement mode
@@ -71,24 +76,20 @@ void setupWIFI() {
   }
 
   udp.beginMulticast(WiFi.localIP(),  ipMulti, portMulti);
+  DEVICE_ID = WiFi.localIP().toString();
+  DEVICE_ID.replace(".", "");
 }
 
 void readADXL345() {
   I2C_readFrom(ADXL345_DEVICE, ADXL345_DATA_POINTER, 6, buffer);
   decoder(buffer, 3, results, LSB_MSB);
 
-  sensorData += (results[0] * ADXL345_SCALE);
-  sensorData += " ";
-  sensorData += (results[1] * ADXL345_SCALE);
-  sensorData += " ";
-  sensorData += (results[2] * ADXL345_SCALE);
-  sensorData += " ";
-
-  //  Serial.print(results[0] * ADXL345_SCALE);
-  //  Serial.print(" ");
-  //  Serial.print(results[1] * ADXL345_SCALE);
-  //  Serial.print(" ");
-  //  Serial.print(results[2] * ADXL345_SCALE);
+  sensorData.concat(results[0] * ADXL345_SCALE);
+  sensorData.concat(" ");
+  sensorData.concat(results[1] * ADXL345_SCALE);
+  sensorData.concat(" ");
+  sensorData.concat(results[2] * ADXL345_SCALE);
+  sensorData.concat(" ");
 }
 
 void readHMC5883L() {
@@ -96,19 +97,12 @@ void readHMC5883L() {
   decoder(buffer, 3, results, MSB_LSB);
 
   // note: the order is X, Z, Y
-  sensorData += (results[0] * HMC5883L_SCALE);
-  sensorData += " ";
-  sensorData += (results[2] * HMC5883L_SCALE);
-  sensorData += " ";
-  sensorData += (results[1] * HMC5883L_SCALE);
-  sensorData += " ";
-
-  //  Serial.print(" ");
-  //  Serial.print(results[0] * HMC5883L_SCALE);
-  //  Serial.print(" ");
-  //  Serial.print(results[2] * HMC5883L_SCALE);
-  //  Serial.print(" ");
-  //  Serial.print(results[1] * HMC5883L_SCALE);
+  sensorData.concat(results[0] * HMC5883L_SCALE);
+  sensorData.concat(" ");
+  sensorData.concat(results[2] * HMC5883L_SCALE);
+  sensorData.concat(" ");
+  sensorData.concat(results[1] * HMC5883L_SCALE);
+  sensorData.concat(" ");
 }
 
 void readITG3200() {
@@ -117,21 +111,12 @@ void readITG3200() {
 
   // note: the order is TEMP, X, Y, Z
 
-  sensorData += (results[1] * ITG3200_GYRO_SCALE);
-  sensorData += " ";
-  sensorData += (results[2] * ITG3200_GYRO_SCALE);
-  sensorData += " ";
-  sensorData += (results[3] * ITG3200_GYRO_SCALE);
-  sensorData += " ";
-  sensorData += (results[0] * ITG3200_TEMP_SCALE);
-
-  //  Serial.print(" ");
-  //  Serial.print(results[1] * ITG3200_GYRO_SCALE);
-  //  Serial.print(" ");
-  //  Serial.print(results[2] * ITG3200_GYRO_SCALE);
-  //  Serial.print(" ");
-  //  Serial.print(results[3] * ITG3200_GYRO_SCALE);
-  //  Serial.print(" ");
-  //  Serial.println(results[0] * ITG3200_TEMP_SCALE);
+  sensorData.concat(results[1] * ITG3200_GYRO_SCALE);
+  sensorData.concat(" ");
+  sensorData.concat(results[2] * ITG3200_GYRO_SCALE);
+  sensorData.concat(" ");
+  sensorData.concat(results[3] * ITG3200_GYRO_SCALE);
+//  sensorData.concat(" ");
+//  sensorData.concat(results[0] * ITG3200_TEMP_SCALE);
 }
 
