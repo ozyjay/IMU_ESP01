@@ -30,9 +30,9 @@ void loop() {
   sensorData.concat(" ");
   sensorData.concat(millis());
   sensorData.concat(" ");
-  readADXL345();
-  readHMC5883L();
-  readITG3200();
+  readADXL345(); // accelerometer x, y, z
+  readHMC5883L(); // magnetometer x, y, z
+  readITG3200(); // gyro x, y, z
   
   // send multicast reply
   udp.beginPacketMulticast(ipMulti, portMulti, WiFi.localIP());
